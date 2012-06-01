@@ -257,6 +257,7 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
   long timeReducing = 0;
   int probability = 1024;
   long solverStartTime = 0;
+  int numAmbivalent = 10;
   
 	public int select() {
     nodeCount++;
@@ -266,7 +267,10 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 			// we only want to use scout when variables have been rated
 			// and when the selection is ambivalent
 			if(solver != null && random.nextInt(probability) == 0 &&
-              heap.hasActivityValues() && heap.multipleVariableSelection()) {
+			/*System.out.println("check ambivalence");
+			heap.first10Activities();
+			if(solver != null && */
+					heap.hasActivityValues() && heap.isAmbivalent()) {
         long start = System.currentTimeMillis();
 				//System.out.println("start " + System.currentTimeMillis());
 				walksatCount++;
@@ -284,10 +288,10 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 				if(satisfied) {
 					callToWalkSATTime += (wEnd - start);
           System.out.println("nodeCount " + nodeCount);
-          System.out.println("walkSATCount " + walksatCount);
-          System.out.println("time ambivalent " + callToWalkSATTime);
-          System.out.println("total time " + (wEnd - solverStartTime));
-          System.out.println("percent of time in scout: " + (callToWalkSATTime / (wEnd - solverStartTime)));
+          System.out.println("scoutCount " + walksatCount);
+          System.out.println("scoutOverhead " + callToWalkSATTime / 1000);
+          System.out.println("solvedBy scout");
+          System.out.println("%overhead: " + (callToWalkSATTime / (wEnd - solverStartTime + 0.0)) * 100);
           boolean[] solution = dataInfo.getSolution();
           int[] trail = Solver.getTrail();
           for(int i = 0; i < trail.length; i++) {
@@ -298,7 +302,7 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
           for(int i = 2; i <= lits.nVars(); i++) {
             System.out.print(":" + (solution[i] ? i : -i));
           }
-					System.out.println("scout SAT");
+					System.out.println("\nSAT");
 					System.exit(0);
 				}
 				int hardestClause = dataInfo.getHardestToSatisfyClause();
@@ -394,6 +398,8 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 	public void setConstraints(IVec<Constr> constraints) {
 		this.constraints = constraints;
 	}
+	
+	
 	
 	private ArrayList<int[]> clauses;
 

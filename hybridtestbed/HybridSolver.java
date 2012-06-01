@@ -54,18 +54,18 @@ public class HybridSolver {
           }
           long end = System.currentTimeMillis();
           System.out.println("nodeCount " + heap.nodeCount);
-          System.out.println("walkSATCount " + heap.walksatCount);
-          System.out.println("time ambivalent " + heap.callToWalkSATTime);
-          System.out.println("Time to run " + (end - start));
-          System.out.println("percent of time in scout: " + (heap.callToWalkSATTime / (end - start)));
+          System.out.println("scoutCount " + heap.walksatCount);
+          System.out.println("scoutOverhead " + heap.callToWalkSATTime / 1000.0);
+          System.out.println("solvedBy sat4j");
+          System.out.println("%overhead: " + (heap.callToWalkSATTime / (end - start + 0.0)) * 100);
           System.out.println("SAT");
         } else {
           long end = System.currentTimeMillis();
           System.out.println("nodeCount " + heap.nodeCount);
           System.out.println("walkSATCount " + heap.walksatCount);
-          System.out.println("time ambivalent " + heap.callToWalkSATTime);
-          System.out.println("Time to run " + (end - start));
-          System.out.println("percent of time in scout: " + (heap.callToWalkSATTime / (end - start)));
+          System.out.println("scoutOverhead " + heap.callToWalkSATTime / 1000);
+          System.out.println("solvedBy sat4j");
+          System.out.println("%overhead: " + (heap.callToWalkSATTime / (end - start)));
           System.out.println("UNSAT");
         }
       } catch (FileNotFoundException e) {

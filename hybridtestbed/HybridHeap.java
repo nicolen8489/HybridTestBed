@@ -166,11 +166,35 @@ public final class HybridHeap implements Serializable {
   	return false;
   }
   
-  public boolean multipleVariableSelection() {
-  	if(activity[heap.get(1)] == activity[heap.get(2)]) {
+  public boolean isAmbivalent() {
+/*  	double val = activity[heap.get(1)];
+  	double fraction = heap.size() / 1000;
+  	//for(int i = 2; i <= heap.size() / 10; i++) {
+  		if(val - activity[heap.get((int)fraction)] > fraction) {
+  			return true;
+  		}
+  	//}*/
+  	int val1 = this.getmin();
+  	int val2 = this.getmin();
+		this.insert(val1);
+		this.insert(val2);
+  	if(activity[val1] == activity[val2]) {
   		return true;
   	}
   	return false;
+  }
+  
+  public void first10Activities() {
+  	int[] vals = new int[10];
+  	for(int i = 1; i <= 10; i++) {
+  		int val = this.getmin();
+  		vals[i-1] = val;
+  		//System.out.println(heap.get(i) + " --- " + activity[heap.get(i)]);
+  		System.out.println(activity[val]);
+  	}
+  	for(int i = 0; i < 10; i++) {
+  		this.insert(vals[i]);
+  	}
   }
 
   // nicolen
