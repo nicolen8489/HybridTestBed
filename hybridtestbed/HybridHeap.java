@@ -34,190 +34,260 @@ import org.sat4j.specs.IVecInt;
 
 /**
  * Heap implementation used to maintain the variables order in some heuristics.
- *
+ * 
  * @author daniel
- *
+ * 
  */
 public final class HybridHeap implements Serializable {
 
-  /*
-   * default serial version id
-   */
-  private static final long serialVersionUID = 1L;
+	/*
+	 * default serial version id
+	 */
+	private static final long serialVersionUID = 1L;
 
-  private static final int left(int i) {
-    return i << 1;
-  }
+	int size = 0;
 
-  private static final int right(int i) {
-    return (i << 1) ^ 1;
-  }
+	private static final int left(int i) {
+		return i << 1;
+	}
 
-  private static final int parent(int i) {
-    return i >> 1;
-  }
+	private static final int right(int i) {
+		return (i << 1) ^ 1;
+	}
 
-  private final boolean comp(int a, int b) {
-    return activity[a] > activity[b];
-  }
+	private static final int parent(int i) {
+		return i >> 1;
+	}
 
-  private final IVecInt heap = new VecInt(); // heap of ints
+	private final boolean comp(int a, int b) {
+		return activity[a] > activity[b];
+	}
 
-  private final IVecInt indices = new VecInt(); // int -> index in heap
+	private final IVecInt heap = new VecInt(); // heap of ints
 
-  private final double[] activity;
+	private final IVecInt indices = new VecInt(); // int -> index in heap
 
-  final void percolateUp(int i) {
-    int x = heap.get(i);
-    while (parent(i) != 0 && comp(x, heap.get(parent(i)))) {
-      heap.set(i, heap.get(parent(i)));
-      indices.set(heap.get(i), i);
-      i = parent(i);
-    }
-    heap.set(i, x);
-    indices.set(x, i);
-  }
+	private final double[] activity;
 
-  final void percolateDown(int i) {
-    int x = heap.get(i);
-    while (left(i) < heap.size()) {
-      int child = right(i) < heap.size()
-                  && comp(heap.get(right(i)), heap.get(left(i))) ? right(i)
-                  : left(i);
-      if (!comp(heap.get(child), x))
-        break;
-      heap.set(i, heap.get(child));
-      indices.set(heap.get(i), i);
-      i = child;
-    }
-    heap.set(i, x);
-    indices.set(x, i);
-  }
+	final void percolateUp(int i) {
+		int x = heap.get(i);
+		while (parent(i) != 0 && comp(x, heap.get(parent(i)))) {
+			heap.set(i, heap.get(parent(i)));
+			indices.set(heap.get(i), i);
+			i = parent(i);
+		}
+		heap.set(i, x);
+		indices.set(x, i);
+	}
 
-  boolean ok(int n) {
-    return n >= 0 && n < indices.size();
-  }
+	final void percolateDown(int i) {
+		int x = heap.get(i);
+		while (left(i) < heap.size()) {
+			int child = right(i) < heap.size()
+					&& comp(heap.get(right(i)), heap.get(left(i))) ? right(i) : left(i);
+			if (!comp(heap.get(child), x))
+				break;
+			heap.set(i, heap.get(child));
+			indices.set(heap.get(i), i);
+			i = child;
+		}
+		heap.set(i, x);
+		indices.set(x, i);
+	}
 
-  public HybridHeap(double[] activity) { // NOPMD
-    this.activity = activity;
-    heap.push(-1);
-  }
+	boolean ok(int n) {
+		return n >= 0 && n < indices.size();
+	}
 
-  public void setBounds(int size) {
-    assert (size >= 0);
-    indices.growTo(size, 0);
-  }
+	public HybridHeap(double[] activity) { // NOPMD
+		this.activity = activity;
+		heap.push(-1);
+	}
 
-  public boolean inHeap(int n) {
-    assert (ok(n));
-    return indices.get(n) != 0;
-  }
+	public void setBounds(int size) {
+		assert (size >= 0);
+		indices.growTo(size, 0);
+	}
 
-  public void increase(int n) {
-    assert (ok(n));
-    assert (inHeap(n));
-    percolateUp(indices.get(n));
-  }
+	public boolean inHeap(int n) {
+		assert (ok(n));
+		return indices.get(n) != 0;
+	}
 
-  public boolean empty() {
-    return heap.size() == 1;
-  }
+	public void increase(int n) {
+		assert (ok(n));
+		assert (inHeap(n));
+		percolateUp(indices.get(n));
 
-  public int size() {
-    return heap.size() - 1;
-  }
+		if (heap.size() > 0) {
+			int i = indexOf(n);
+			if (parent(i) != 0 && activity[n] > activity[heap.get(parent(i))]) {
+				System.out.println("incorrect increase " + n);
+				System.exit(1);
+			}
+			if (left(i) != 0 && left(i) < heap.size()
+					&& activity[n] < activity[heap.get(left(i))]) {
+				System.out.println("incorrect increase " + n);
+				System.exit(1);
+			}
+			if (right(i) != 0 && right(i) < heap.size()
+					&& activity[n] < activity[heap.get(right(i))]) {
+				System.out.println("incorrect increase " + n);
+				System.exit(1);
+			}
+		}
+		// validate();
+	}
 
-  public int get(int i) {
-    int r = heap.get(i);
-    heap.set(i, heap.last());
-    indices.set(heap.get(i), i);
-    indices.set(r, 0);
-    heap.pop();
-    if (heap.size() > 1)
-      percolateDown(1);
-    return r;
-  }
+	public boolean empty() {
+		return heap.size() == 1;
+	}
 
-  public void insert(int n) {
-    assert (ok(n));
-    indices.set(n, heap.size());
-    heap.push(n);
-    percolateUp(indices.get(n));
-  }
+	public int size() {
+		return heap.size() - 1;
+	}
 
-  public int getmin() {
-    return get(1);
-  }
+	public int get(int i) {
+		int r = heap.get(i);
+		int n = heap.get(i);
+		if (i == indexOf(heap.last())) {
+			indices.set(r, 0);
+			heap.pop();
+			// heap.set(i, indexOf(heap.last()) - 1);
+		} else {
+			heap.set(i, heap.last());
+			n = heap.get(i);
+			indices.set(heap.get(i), i);
+			indices.set(r, 0);
+			heap.pop();
+			if (heap.size() > 1) { // > i) { // 1
+				if (activity[heap.get(i)] > activity[r]) {
+					percolateUp(i);
+				} else {
+					percolateDown(i);
+				}
+			}
+		}
+		// if (heap.size() > 1) { // > i) { // 1
+		// if (activity[heap.get(i)] > activity[r]) {
+		// percolateUp(i);
+		// } else {
+		// percolateDown(i);
+		// }
+		// }
+		/*
+		 * if(heap.size() > i) { percolateDown(i); }
+		 */
+		if (heap.size() > 0 && (i = indexOf(n)) != 0) {
+			if (parent(i) != 0 && activity[n] > activity[heap.get(parent(i))]) {
+				System.out.println("incorrect get " + n);
+				System.exit(1);
+			}
+			if (left(i) != 0 && left(i) < heap.size()
+					&& activity[n] < activity[heap.get(left(i))]) {
+				System.out.println("incorrect get " + n);
+				System.exit(1);
+			}
+			if (right(i) != 0 && right(i) < heap.size()
+					&& activity[n] < activity[heap.get(right(i))]) {
+				System.out.println("incorrect get " + n);
+				System.exit(1);
+			}
+		}
 
-  public boolean heapProperty() {
-    return heapProperty(1);
-  }
+		// validate();
+		return r;
+	}
 
-  public boolean heapProperty(int i) {
-    return i >= heap.size()
-           || ((parent(i) == 0 || !comp(heap.get(i), heap.get(parent(i))))
-               && heapProperty(left(i)) && heapProperty(right(i)));
-  }
-  
-  public boolean hasActivityValues() {
-  	if(activity[heap.get(1)] != 0.0) {
-  		return true;
-  	}
-  	return false;
-  }
-  
-  public boolean isAmbivalent() {
-/*  	double val = activity[heap.get(1)];
-  	double fraction = heap.size() / 1000;
-  	//for(int i = 2; i <= heap.size() / 10; i++) {
-  		if(val - activity[heap.get((int)fraction)] > fraction) {
-  			return true;
-  		}
-  	//}*/
-  	int val1 = this.getmin();
-  	int val2 = this.getmin();
-		this.insert(val1);
-		this.insert(val2);
-  	if(activity[val1] == activity[val2]) {
-  		return true;
-  	}
-  	return false;
-  }
-  
-  public void first10Activities() {
-  	int[] vals = new int[10];
-  	for(int i = 1; i <= 10; i++) {
-  		int val = this.getmin();
-  		vals[i-1] = val;
-  		//System.out.println(heap.get(i) + " --- " + activity[heap.get(i)]);
-  		System.out.println(activity[val]);
-  	}
-  	for(int i = 0; i < 10; i++) {
-  		this.insert(vals[i]);
-  	}
-  }
+	// nicolen
+	public int last() {
+		return heap.last();
+	}
 
-  // nicolen
-  public int variablesWithActivity(double activityVar, int[] variables, int i, int count) {
-    if (count == 0) {
-      activityVar = activity[heap.get(1)];
-      variables[count++] = heap.get(1);
-    }
-    if (left(i) < heap.size() && activity[heap.get(left(i))] == activityVar) {
-      variables[count++] = heap.get(left(i));
-      int j = left(i);
-      count = variablesWithActivity(activityVar, variables, j, count);
-    }
-    if (right(i) < heap.size() && activity[heap.get(right(i))] == activityVar) {
-      variables[count++] = heap.get(right(i));
-      int j = right(i);
-      count = variablesWithActivity(activityVar, variables, j, count);
-    }
-    return count;
-  }
+	public int first() {
+		return heap.get(1);
+	}
 
-  public int indexOf(int variable) {
-    return indices.get(variable);
-  }
+	public void insert(int n) {
+		assert (ok(n));
+		indices.set(n, heap.size());
+		heap.push(n);
+		// if(heap.size() <= 10) {
+		// topTen[heap.size() - 1] = n;
+		// }
+		percolateUp(indices.get(n));
+		if (heap.size() > 0) {
+			int i = indexOf(n);
+			if (parent(i) != 0 && activity[n] > activity[heap.get(parent(i))]) {
+				System.out.println("incorrect insert " + n);
+				System.exit(1);
+			}
+			if (left(i) != 0 && left(i) < heap.size()
+					&& activity[n] < activity[heap.get(left(i))]) {
+				System.out.println("incorrect insert " + n);
+				System.exit(1);
+			}
+			if (right(i) != 0 && right(i) < heap.size()
+					&& activity[n] < activity[heap.get(right(i))]) {
+				System.out.println("incorrect insert " + n);
+				System.exit(1);
+			}
+		}
+
+	}
+
+	public int getmin() {
+		return get(1);
+	}
+
+	public boolean heapProperty() {
+		return heapProperty(1);
+	}
+
+	public boolean heapProperty(int i) {
+		return i >= heap.size()
+				|| ((parent(i) == 0 || !comp(heap.get(i), heap.get(parent(i))))
+						&& heapProperty(left(i)) && heapProperty(right(i)));
+	}
+
+	// nicolen
+	public double getActivity(int literal) {
+		return activity[literal];
+	}
+
+	public int indexOf(int variable) {
+		return indices.get(variable);
+	}
+
+	// public boolean validate() {
+	// for(int i = 1; i < heap.size(); i++) {
+	// int left = left(i);
+	// int right = right(i);
+	// if(left >= heap.size() && right >= heap.size()) {
+	// break;
+	// }
+	// if(left < heap.size() && activity[heap.get(left)] > activity[heap.get(i)]
+	// || right < heap.size() && activity[heap.get(right)] >
+	// activity[heap.get(i)]) {
+	// System.out.println("heap does not validate");
+	// System.exit(1);
+	// return false;
+	// }
+	// }
+	// return true;
+	// }
+
+	public boolean hasActivityValues() {
+		// boolean returnVal = false;
+		// if(heap != null && !heap.empty()) {
+		// int val = heap.getmin();
+		// if(heap.getActivity(val) != 0.0) {
+		// returnVal = true;
+		// }
+		// heap.insert(val);
+		// }
+		// return returnVal;
+		return heap.size() > 0 && activity[heap.get(1)] != 0.0;
+	}
 
 }

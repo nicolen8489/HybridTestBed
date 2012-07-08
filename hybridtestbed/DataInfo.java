@@ -6,6 +6,11 @@ public class DataInfo {
   private int localMinSatClauseSum;
   private int hardestToSatisfy;
   private boolean[] solution;
+  private int next;
+  private int var;
+  private int[] counts;
+  private int numAtoms;
+  private long walksatTime;
   public DataInfo() {
     maxSatClause = 0;
   }
@@ -32,5 +37,29 @@ public class DataInfo {
       return new boolean[0];
     }
     return solution;
+  }
+  public int getNext() {
+	  return next;
+  }
+  public void setNext(int next) {
+	  this.next = next;
+  }
+  public int getVar() {
+	  return var;
+  }
+  public void setVar(int var) {
+	  this.var = var;
+  }
+  public int getCount(int var) {
+	  return counts[numAtoms + var] + counts[numAtoms + -var];
+  }
+  public int getPolarityCount(int var) {
+	  return counts[numAtoms + var];
+  }
+  public void setNumAtoms(int numAtoms) {
+	  this.numAtoms = numAtoms;
+  }
+  public void setCounts(int[] counts) {
+	  this.counts = counts;
   }
 }

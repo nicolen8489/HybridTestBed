@@ -8,7 +8,7 @@ import java.util.*;
 // Takes boolean input in CNF form (from either a Reader or an Enumeration)
 
 // nicolen
-public class WalkSatSolver implements ScoutSolver {
+public class WalkSatSolver {
 
 	/************************************/
 	/* Constant parameters */
@@ -162,7 +162,9 @@ public class WalkSatSolver implements ScoutSolver {
 	// The number of tries that should be made.
 	int numrun = 10;
 	// The number of flips that should be made per try
-	long cutoff = 100000;
+	//long cutoff = 100000;
+	// nicolen
+	long cutoff = 25000;
 	// long cutoff = 5000000;
 
 	long base_cutoff = 100000;
@@ -284,6 +286,8 @@ public class WalkSatSolver implements ScoutSolver {
 				}
 			} else if(parts[i].equals("-seed")) {
         this.seed = Long.parseLong(parts[++i]);
+      } else if(parts[i].equals("-cutoff")) {
+      	this.cutoff = Long.parseLong(parts[++i]);
       }
 		}
 	}
@@ -332,11 +336,12 @@ public class WalkSatSolver implements ScoutSolver {
 	// }
 
 	// nicolen
-	public boolean solve(int[][] clauses, int numAtoms) {
+	public boolean solve(int[][] clauses, int numAtoms, int[] size) {
 		this.clause = clauses;
 		this.numAtoms = numAtoms;
 		this.numClauses = clauses.length;
 		this.inputFormat = this.PASSED;
+		this.size = size;
 		return solve();
 	}
 
@@ -367,8 +372,11 @@ public class WalkSatSolver implements ScoutSolver {
 
 		Date dt = new Date();
 		long tm = dt.getTime();
-    if(seed == 0)
+    if(seed == 0) {
       seed = tm;// (tm & 0177) * 1000000;
+      //seed = Long.parseLong("1341297178660");
+      System.out.println("walksat seed " + seed);
+    }
 
 		randGenerator = new Ranmar(seed);
 
@@ -522,7 +530,7 @@ public class WalkSatSolver implements ScoutSolver {
 
 			// iClause is the index of the clause we are currently checking
 			iClause = occptr[i];
-
+			
 			if (--numTrueLiterals[iClause] == 0) {
 				// --numTrueLiterals[iClause] == 0 means that we just made this
 				// clause false by this flip.
@@ -572,7 +580,6 @@ public class WalkSatSolver implements ScoutSolver {
 			// iClause = literalOccurences[numAtoms+toEnforce][i];
 			// iClause = *(occptr++);
 			iClause = occptr[i];
-
 			if (++numTrueLiterals[iClause] == 1) {
 				// ++numTrueLiterals[iClause] == 1 means that we just made this
 				// clause true by this flip
@@ -661,7 +668,9 @@ public class WalkSatSolver implements ScoutSolver {
 
 		// nicolen
 		// clause = new int[numClauses][];
-		size = new int[numClauses];
+		if(size == null) {
+		  size = new int[numClauses];
+		}
 		falseClauses = new int[numClauses];
 		lowFalse = new int[numClauses];
 		whereFalse = new int[numClauses];
@@ -732,8 +741,8 @@ public class WalkSatSolver implements ScoutSolver {
 			// clauses are already built so just
 			// populate numLiteralOccurences and size
 			for (i = 0; i < numClauses; i++) {
-				size[i] = clause[i].length;
-				for (j = 0; j < clause[i].length; j++) {
+				//size[i] = clause[i].length;
+				for (j = 0; j < size[i]; j++) {//clause[i].length; j++) {
 					numLiteralOccurences[clause[i][j] + numAtoms]++;
 				}
 			}
@@ -754,6 +763,8 @@ public class WalkSatSolver implements ScoutSolver {
 				numLiteralOccurences[literalIndex]++;
 			}
 		}
+		dataInfo.setCounts(numLiteralOccurences);
+		dataInfo.setNumAtoms(numAtoms);
 	}
 
 	private void initialize_statistics() {
@@ -822,7 +833,8 @@ public class WalkSatSolver implements ScoutSolver {
 					thetruelit = clause[i][j];
 				}
 			}
-			if (numTrueLiterals[i] == 0) {
+			// nicolen added check for clause size
+			if (numTrueLiterals[i] == 0 && size[i] > 0) {
 				whereFalse[i] = numFalseClauses;
 				falseClauses[numFalseClauses] = i;
 				// nicolen
@@ -1020,7 +1032,9 @@ public class WalkSatSolver implements ScoutSolver {
 			tofix = falseClauses[toFixIndex];
 
 			int clauseToFix[] = clause[tofix];
-			clausesize = clauseToFix.length;
+			// changed to use the clause array
+			// for size instead of length
+			clausesize = size[tofix];
 
 			numbest = 0;
 			bestvalue = BIG;
