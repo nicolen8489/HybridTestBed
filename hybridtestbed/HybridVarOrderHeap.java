@@ -31,6 +31,7 @@ import static org.sat4j.core.LiteralsUtils.var;
 
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.sat4j.core.LiteralsUtils;
@@ -38,8 +39,10 @@ import org.sat4j.minisat.core.Constr;
 import org.sat4j.minisat.core.ILits;
 import org.sat4j.minisat.core.IOrder;
 import org.sat4j.minisat.core.IPhaseSelectionStrategy;
+import org.sat4j.minisat.core.Solver;
 import org.sat4j.minisat.orders.PhaseInLastLearnedClauseSelectionStrategy;
 import org.sat4j.specs.IVec;
+import org.sat4j.specs.IVecInt;
 
 /*
  * Created on 16 oct. 2003
@@ -76,11 +79,6 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 	protected HybridHeap heap;
 
 	protected IPhaseSelectionStrategy phaseStrategy;
-
-	// nicolen
-	// private WalkSatSolver solver;
-	// private ScoutSolver solver = null;
-	//private DataInfo dataInfo; // = new DataInfo();
 	private Ambivalence ambivalence;
 
 	public HybridVarOrderHeap(DataInfo info, Ambivalence ambivalence) {
@@ -93,16 +91,11 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 		this.ambivalence = ambivalence;
 		this.dataInfo = info;
 		long seed = System.currentTimeMillis();
-		//seed = Long.parseLong("1341297178623");
+		//seed = Long.parseLong("1341793769561");
 		random = new Random(seed);
 		System.out.println("heap seed " + seed);
-		// solver = new WalkSatSolver(dataInfo);
 	}
 
-	// nicolen
-	// public void setScoutSolver(ScoutSolver solver) {
-	// this.solver = solver;
-	// }
 
 	/**
 	 * Change the selection strategy.
@@ -175,16 +168,10 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 		}
 	}
 
-	/**
-     *
-     */
 	public void varDecayActivity() {
 		varInc *= varDecay;
 	}
 
-	/**
-     *
-     */
 	private void varRescaleActivity() {
 		for (int i = 1; i < activity.length; i++) {
 			activity[i] *= VAR_RESCALE_FACTOR;
@@ -196,9 +183,6 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 		return activity[var(p)];
 	}
 
-	/**
-     *
-     */
 	public int numberOfInterestingVariables() {
 		int cpt = 0;
 		for (int i = 1; i < activity.length; i++) {
@@ -223,10 +207,6 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 		// nicolen
 		heap = new HybridHeap(activity);
 		ambivalence.setHeap(heap);
-		// ambivalence = new First2EqualAmbivalence(ambProb, scoutProb, heap);
-		// nicolen
-		// heap.ambProb = this.ambProb;
-		// System.out.println("ambProb " + heap.ambProb);
 		heap.setBounds(nlength);
 		for (int i = 1; i < nlength; i++) {
 			assert i > 0;
@@ -261,20 +241,10 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 	}
 
 	// nicolen
-	//int walksatCount = 0;
 	int nodeCount = 0;
-	Random random; // = new Random(seed);
-	//long timeInWalkSAT = 0;
-	//long callToWalkSATTime = 0;
-	// long timeReducing = 0;
-	// int scoutProb = 1024;
-	//long solverStartTime = 0;
-	// int numAmbivalent = 10;
+	Random random;
 	boolean firstSelectCall = true;
     private DataInfo dataInfo;
-	// nicolen - temp
-	// IVecInt trail;
-	//long solveStart = 0;
 
 	public int select() {
 		nodeCount++;
@@ -282,7 +252,7 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 			int var = 0;
 			int next = 0;
 			if (strategy != null
-					&& (firstSelectCall || ambivalence.isAmbivalent())) {
+					&& (firstSelectCall || ambivalence.isAmbivalent(dataInfo))) {
 
 				firstSelectCall = false;
 				this.updateClauseStates();
@@ -294,95 +264,19 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 				}
 				heap.get(heap.indexOf(dataInfo.getVar()));
 				next = dataInfo.getNext();
-				
-				//long start = System.currentTimeMillis();
-				//walksatCount++;
-				// long startR = System.currentTimeMillis();
-				// long endR = System.currentTimeMillis();
-				// timeReducing += (endR - startR);
-				//long wStart = System.currentTimeMillis();
-				//boolean satisfied = solver.solve(clauses, lits.nVars(), size);
-				//long wEnd = System.currentTimeMillis();
-				//timeInWalkSAT += (wEnd - wStart);
-				//if (satisfied) {
-//					callToWalkSATTime += (wEnd - start);
-//					System.out.println("nodeCount " + nodeCount);
-//					System.out.println("scoutCount " + walksatCount);
-//					System.out.println("scoutTime " + timeInWalkSAT / 1000.0);
-//					System.out.println("scoutSetup "
-//							+ (callToWalkSATTime - timeInWalkSAT) / 1000.0);
-//					System.out.println("scoutOverhead " + callToWalkSATTime
-//							/ 1000.0);
-//					System.out.println("totalTime " + (wEnd - solverStartTime)
-//							/ 1000.0);
-//					System.out.println("solvedBy scout");
-//					System.out
-//							.println("%overhead: "
-//									+ (callToWalkSATTime / (wEnd
-//											- solverStartTime + 0.0)) * 100);
-//					System.out.println(ambivalence.getAmbivalenceData());
-//					System.out.print("solution ");
-//					boolean[] solution = dataInfo.getSolution();
-//					for (int i = 1; i <= lits.nVars(); i++) {
-//						if (lits.belongsToPool(i)) {
-//							int p = lits.getFromPool(i);
-//							if (!lits.isUnassigned(p)) {
-//								solution[i] = lits.isSatisfied(p);
-//							}
-//						}
-//					}
-//					System.out.print(solution[1] ? 1 : -1);
-//					for (int i = 2; i <= lits.nVars(); i++) {
-//						System.out.print(":" + (solution[i] ? i : -i));
-//					}
-//					System.out.println("\nSAT");
-//					System.exit(0);
-				//}
-//				int hardestClause = dataInfo.getHardestToSatisfyClause();
-//				int[] hardestClauseLiterals = clauses[hardestClause];
-//				double maxActivity = 0;
-//				for (int i = 0; i < size[hardestClause]; i++) {
-//					int temp = Math.abs(hardestClauseLiterals[i]);
-//					if (activity[temp] > maxActivity) {
-//						maxActivity = activity[temp];
-//						var = hardestClauseLiterals[i];
-//					}
-//				}
-//				// if the hardest clause all variables have an
-//				// activity of zero then no variable will be
-//				// selected by the max technique, so use a random
-//				// selection
-//				if (maxActivity == 0) {
-//					var = hardestClauseLiterals[random
-//							.nextInt(size[hardestClause])];
-//				}
-//				next = LiteralsUtils.toInternal(var);
-//				var = Math.abs(var);
-//				heap.get(heap.indexOf(var));
-//				long end = System.currentTimeMillis();
-//				callToWalkSATTime += (end - start);
-				// now unassign the variable that we've tested with
-				// the software will handle assigning it correctly
-				// now that we've made a selection
-				// lits.unassign(var);
-				System.out.println("picked by walksat " + nodeCount);
 			} else {
 				// if we clearly have one variable torandom.next pick
 				// just pick it
 				var = heap.getmin();
 				next = phaseStrategy.select(var);
-				System.out.println("picked by sat4j " + nodeCount);
 			}
 
-			// next = phaseStrategy.select(var);
 			if (lits.isUnassigned(next)) {
 				if (activity[var] < 0.0001) {
 					nullchoice++;
 				}
 				return next;
-			} else {
-				System.out.println("lit assigned");
-			}
+			} 
 		}
 		return ILits.UNDEFINED;
 	}
@@ -400,7 +294,7 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 		clauses = new int[constraints.size()][];
 		size = new int[constraints.size()];
 		for (int i = 0; i < constraints.size(); i++) {
-			int[] reduced = constraints.get(i).toArray();
+			int[] reduced = constraints.get(i).toArray(); 
 			clauses[i] = reduced;
 			size[i] = reduced.length;
 		}
@@ -425,10 +319,4 @@ public class HybridVarOrderHeap implements IOrder, Serializable {
 			size[i] = clauses[i].length - setVariables;
 		}
 	}
-
-	// nicolen
-	// private double ambProb = 0.2;
-	// public void setAmbProb(double ambProb) {
-	// this.ambProb = ambProb;
-	// }
 }
