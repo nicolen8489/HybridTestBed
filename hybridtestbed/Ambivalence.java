@@ -23,6 +23,8 @@ public abstract class Ambivalence {
 	double firstRange;
 	double secondRange;
 	double thirdRange;
+	boolean maintainPercent;
+	double percent = 5;
 
 	public String getAmbivalenceData() {
 		String returnString = "";
@@ -58,7 +60,7 @@ public abstract class Ambivalence {
 
 	public Ambivalence(double ambProb, int scoutProb, HybridHeap heap) {
 		long seed = System.currentTimeMillis();
-		//seed = Long.parseLong("1341297178621");
+		//seed = Long.parseLong("1341793769559");
 		random = new Random(seed);
 		System.out.println("ambivalence seed " + seed);
 		this.ambProb = ambProb;
@@ -69,24 +71,6 @@ public abstract class Ambivalence {
 		this.scoutProb = scoutProb;
 		this.heap = heap;
 	}
-
-	// public boolean hasActivityValues() {
-	// // boolean returnVal = false;
-	// // if(heap != null && !heap.empty()) {
-	// // int val = heap.getmin();
-	// // if(heap.getActivity(val) != 0.0) {
-	// // returnVal = true;
-	// // }
-	// // heap.insert(val);
-	// // }
-	// // return returnVal;
-	// System.out.println("has activity values");
-	// System.out.println(heap.get(1));
-	// System.out.println(heap.size());
-	// int val = heap.get(1);
-	// heap.insert(val);
-	// return heap.size() > 0 && heap.getActivity(val) != 0.0;
-	// }
 
 	public void setAmbProb(double ambProb) {
 		this.ambProb = ambProb;
@@ -112,5 +96,5 @@ public abstract class Ambivalence {
 		this.heap = heap;
 	}
 
-	public abstract boolean isAmbivalent();
+	public abstract boolean isAmbivalent(DataInfo dataInfo);
 }
