@@ -12,8 +12,11 @@ public class First10Ambivalence extends Ambivalence {
 	}
 
 	@Override
-	public boolean isAmbivalent() {
-		if (heap.hasActivityValues()) {
+	public boolean isAmbivalent(DataInfo dataInfo) {
+		if (heap.hasActivityValues() &&
+				(maintainPercent && 
+				(dataInfo.getWalksatTime() / (System.currentTimeMillis() - dataInfo.getSolverStartTime())) * 100 < percent
+				|| !maintainPercent)) {
 			isAmbivalentCalls++;
 
 			//if (random.nextInt(scoutProb) == 0) {
