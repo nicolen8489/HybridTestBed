@@ -23,28 +23,19 @@ public class HybridSolver {
 			long start = System.currentTimeMillis();
 			ISolver solver = SolverFactory.newDefault();
 			DataInfo dataInfo = new DataInfo();
-			//Ambivalence ambivalence = new First2EqualAmbivalence(0.125, 1024, null);
 			Ambivalence ambivalence = new First2EqualAmbivalence(0.1042, 1024, null);
 			String parameters = "";
 			boolean useNVars = false;
 			String strategyType = "randomSelect";
+			boolean maintainPercent = false;
 			// we don't want to include the filename
 			for (int i = 0; i < args.length - 1; i++) {
 				if (args[i].equals("-prob")) {
-					// heap.scoutProb = Integer.parseInt(args[++i]);
 					ambivalence.setScoutProb(Integer.parseInt(args[++i]));
-				} /*
-					 * else if(args[i].equals("-cutoff")) { cutoff =
-					 * Integer.parseInt(args[++i]); }
-					 */
+				} 
 				else if (args[i].equals("-ambProb")) {
-					// heap.setAmbProb(Double.parseDouble(args[++i]));
 					ambivalence.setAmbProb(Double.parseDouble(args[++i]));
 				} else if (args[i].equals("-ambType")) {
-					/*
-					 * if(args[++i].equals("top10twoEqual")) { ambivalence = new
-					 * First2EqualAmbivalence(); } else
-					 */
 					if (args[++i].equals("inverseProb")) {
 						ambivalence = new InverseProbAmbivalence(ambivalence.getAmbProb(),
 								ambivalence.getScoutProb(), null, 500);
@@ -65,36 +56,24 @@ public class HybridSolver {
 					useNVars = true;
 				} else if(args[i].equals("-strategy")) { 
 					strategyType = args[++i];
+			    } else if(args[i].equals("-maintainPercent")) {
+			    	maintainPercent = true;
 			    } else {
 					parameters += args[i] + " ";
 				}
 			}
 
+			ambivalence.maintainPercent = maintainPercent;
 			HybridVarOrderHeap heap = new HybridVarOrderHeap(
 					((VarOrderHeap) ((Solver) solver).getOrder())
 							.getPhaseSelectionStrategy(), dataInfo, ambivalence);
 			((Solver) solver).setOrder(heap);
-			// parameters += "-solcnf";
 			WalkSatSolver scoutSolver = new WalkSatSolver(dataInfo, parameters);
 			scoutSolver.numrun = 1;
-			// scoutSolver.cutoff = cutoff;
-			
-			//heap.setScoutSolver(scoutSolver);
-			// heap.setConstraints(((Solver)solver).getOriginalConstraints());
-			//heap.solverStartTime = start;
 			Reader reader = new DimacsReader(solver);
-//			if(useNVars && solver.nVars() * solver.nVars() - 1 >= 10) {
-//				System.out.println("using new method");
-//				ambivalence.setScoutProb((solver.nVars() * solver.nVars() - 1) / 10);
-//			} else {
-//				System.out.println("not using new method");
-//			}
 			IProblem problem = null;
 			try {
 				problem = reader.parseInstance(args[args.length - 1]);
-//				if(useNVars && problem.nVars() * problem.nVars() - 1 >= 10) {
-//					ambivalence.setScoutProb((problem.nVars() * problem.nVars() - 1) / 10);
-//				}
 				WalkSatStrategy strategy = null;
 				if(strategyType.equals("clauseCount")) {
 					strategy = new ClauseCountStrategy(scoutSolver, ((Solver)solver).getVocabulary());
@@ -103,12 +82,9 @@ public class HybridSolver {
 				} else {
 					strategy = new RandomSelectionStrategy(scoutSolver, ((Solver)solver).getVocabulary());
 				}
-				strategy.solverStartTime = start;
+				dataInfo.setSolverStartTime(start);
 				heap.setStrategy(strategy);
 				heap.setupClauseStates(((Solver) solver).getOriginalConstraints());
-//				heap.trail = ((Solver) solver).getTrailObj();
-				//long solveStart = System.currentTimeMillis();
-				//heap.solveStart = solveStart;
 				
 				if (problem.isSatisfiable()) {
 					System.out.print("solution ");
