@@ -8,7 +8,7 @@ import java.util.*;
 // Takes boolean input in CNF form (from either a Reader or an Enumeration)
 
 // nicolen
-public class WalkSatSolver {
+public class WalkSatSolver implements ScoutSolver {
 
 	/************************************/
 	/* Constant parameters */
@@ -374,7 +374,7 @@ public class WalkSatSolver {
 		long tm = dt.getTime();
     if(seed == 0) {
       seed = tm;// (tm & 0177) * 1000000;
-      //seed = Long.parseLong("1341297178660");
+      //seed = Long.parseLong("1341793770616");
       System.out.println("walksat seed " + seed);
     }
 
@@ -452,11 +452,6 @@ public class WalkSatSolver {
 				System.err.println("problem flushing output buffer to results file");
 			}
 		}
-		// if (numsuccesstry > 0) {
-		// System.out.println("SAT");
-		// } else {
-		// System.out.println("UNSAT");
-		// }
 		// nicolen
 		int maxUnSatClause = -1;
 		int maxUnSatCount = -1;
@@ -471,9 +466,6 @@ public class WalkSatSolver {
 		dataInfo.setMaxSatClause(maxSatClause);
 
 		// Return true if we found any solutions at all.
-   /* if(numsuccesstry > 0) {
-      this.printsolcnf();
-    }*/
     if(numsuccesstry > 0) {
       dataInfo.setSolution(allSolutions[0]);
     }
