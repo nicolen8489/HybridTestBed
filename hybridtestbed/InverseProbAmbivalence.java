@@ -26,8 +26,11 @@ public class InverseProbAmbivalence extends Ambivalence {
 	}
 	
 	@Override
-	public boolean isAmbivalent() {
-		if (heap.hasActivityValues()) {
+	public boolean isAmbivalent(DataInfo dataInfo) {
+		if (heap.hasActivityValues() &&
+				(maintainPercent && 
+				(dataInfo.getWalksatTime() / (System.currentTimeMillis() - dataInfo.getSolverStartTime())) * 100 < percent
+				|| !maintainPercent)) {
 			isAmbivalentCalls++;
 			if (heap.size() >= 2
 					&& ((activities[0] = heap.getActivity(vals[0] = heap.getmin())) 
