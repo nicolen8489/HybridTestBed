@@ -10,7 +10,7 @@ public abstract class WalkSatStrategy {
 	protected ILits lits;
 	protected long wEnd;
 	protected long start;
-	long solverStartTime;
+	//long solverStartTime;
 
 	public WalkSatStrategy(WalkSatSolver solver, ILits vocabulary) {
 		this.solver = solver;
@@ -27,10 +27,10 @@ public abstract class WalkSatStrategy {
 		System.out.println("scoutSetup " + (callToWalkSATTime - timeInWalkSat)
 				/ 1000.0);
 		System.out.println("scoutOverhead " + callToWalkSATTime / 1000.0);
-		System.out.println("totalTime " + (wEnd - solverStartTime) / 1000.0);
+		System.out.println("totalTime " + (wEnd - dataInfo.getSolverStartTime()) / 1000.0);
 		System.out.println("solvedBy scout");
 		System.out.println("%overhead: "
-				+ (callToWalkSATTime / (wEnd - solverStartTime + 0.0)) * 100);
+				+ (callToWalkSATTime / (wEnd - dataInfo.getSolverStartTime() + 0.0)) * 100);
 		System.out.print("solution ");
 		boolean[] solution = dataInfo.getSolution();
 		for (int i = 1; i <= lits.nVars(); i++) {
